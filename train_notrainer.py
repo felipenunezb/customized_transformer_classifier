@@ -64,6 +64,12 @@ def parse_args():
         "--validation_file", type=str, default=None, help="A csv or a json file containing the validation data."
     )
     parser.add_argument(
+        "--label_name", type=str, default="label", help="Column name of the first label to predict."
+    )
+    parser.add_argument(
+        "--label_2_name", type=str, default="label", help="Column name of the second label to predict."
+    )
+    parser.add_argument(
         "--max_seq_length",
         type=int,
         default=184,
@@ -234,12 +240,12 @@ def main():
 
     # Labels
     # Get labels list - notice files should have a 'label' field
-    label_list = raw_datasets["train"].unique("label")
+    label_list = raw_datasets["train"].unique(args.label_name)
     label_list.sort()  # Let's sort it for determinism
     num_labels = len(label_list)
 
     if args.task_name == 'double':
-        label_list_2 = raw_datasets["train"].unique("label_2")
+        label_list_2 = raw_datasets["train"].unique(args.label_2_name)
         label_list_2.sort()  # Let's sort it for determinism
         num_labels_2 = len(label_list_2)
 
@@ -275,13 +281,13 @@ def main():
     model.config.id2label = {id: label for label, id in config.label2id.items()}
     
     #label to IDs when having multiple labels
-    remove_cols = ['text']
+    remove_cols = ['text', args.label_name, args.label_2_name]
     if args.task_name == 'double':
         label_to_id_2 = {v: i for i, v in enumerate(label_list_2)}
         model.config.label2id_2 = label_to_id_2
         model.config.id2label_2 = {id: label for label, id in config.label2id_2.items()}
     else:
-        remove_cols.append("label_2")
+        remove_cols.append(args.label_2_name)
 
     if args.max_seq_length > tokenizer.model_max_length:
         logger.warning(
@@ -297,12 +303,12 @@ def main():
         encoded_inputs = tokenizer(text, padding=padding, max_length=max_seq_length, truncation=True)
 
         # Map labels to IDs
-        if label_to_id is not None and "label" in examples:
-            encoded_inputs["label"] = [(label_to_id[l] if l != -1 else -1) for l in examples["label"]]
+        if label_to_id is not None and args.label_name in examples:
+            encoded_inputs["label"] = [(label_to_id[l] if l != -1 else -1) for l in examples[args.label_name]]
 
         if args.task_name == 'double':
-            if label_to_id_2 is not None and "label_2" in examples:
-                encoded_inputs["label_2"] = [(label_to_id_2[l] if l != -1 else -1) for l in examples["label_2"]]
+            if label_to_id_2 is not None and args.label_2_name in examples:
+                encoded_inputs["label_2"] = [(label_to_id_2[l] if l != -1 else -1) for l in examples[args.label_2_name]]
 
         return encoded_inputs
 
