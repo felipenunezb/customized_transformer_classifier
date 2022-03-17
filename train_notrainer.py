@@ -64,6 +64,9 @@ def parse_args():
         "--validation_file", type=str, default=None, help="A csv or a json file containing the validation data."
     )
     parser.add_argument(
+        "--text_column", type=str, default="text", help="Column name of the text to analyze."
+    )
+    parser.add_argument(
         "--label_name", type=str, default="label", help="Column name of the first label to predict."
     )
     parser.add_argument(
@@ -281,7 +284,7 @@ def main():
     model.config.id2label = {id: label for label, id in config.label2id.items()}
     
     #label to IDs when having multiple labels
-    remove_cols = ['text', args.label_name, args.label_2_name]
+    remove_cols = [args.text_column, args.label_name, args.label_2_name]
     if args.task_name == 'double':
         label_to_id_2 = {v: i for i, v in enumerate(label_list_2)}
         model.config.label2id_2 = label_to_id_2
@@ -298,7 +301,7 @@ def main():
 
     #Processing fx, tokenizes inputs and map labels to IDs
     def preprocess_data(examples):
-        text = examples["text"]
+        text = examples[args.text_column]
 
         encoded_inputs = tokenizer(text, padding=padding, max_length=max_seq_length, truncation=True)
 
@@ -316,7 +319,7 @@ def main():
         processed_datasets = raw_datasets.map(
             preprocess_data,
             batched=True,
-            remove_columns=remove_cols,
+            remove_columns=raw_datasets["train"].column_names,
             desc="Running tokenizer on dataset",
         )
 
