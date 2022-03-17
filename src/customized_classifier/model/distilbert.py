@@ -33,7 +33,7 @@ class SequenceClassifierDoubleOutput(ModelOutput):
 
     loss: Optional[torch.FloatTensor] = None
     logits: torch.FloatTensor = None
-    logits_v2: Optional[torch.FloatTensor] = None
+    logits_2: Optional[torch.FloatTensor] = None
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
     attentions: Optional[Tuple[torch.FloatTensor]] = None
 
